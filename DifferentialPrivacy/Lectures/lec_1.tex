@@ -1,0 +1,63 @@
+\chapter{Basic Terms}
+\section{Formalizing Differential Privacy}
+\begin{definition}[Probability Simplex]
+    Given a discrete set $B$, the \textit{probability simplex} over $B$, denoted $\Delta(B)$, is defined to be:
+    \[
+        \Delta(B) = \left\{ x \in \mathbb{R}^{|B|} : x_i \ge 0 \text{ for all } i \text{ and } \sum_{i=1}^{|B|} x_i = 1 \right\}
+    \]
+\end{definition}
+\begin{definition}[Randomized Algorithm]
+    A randomized algorithm $\mathcal{M}$ with domain $A$ and discrete range $B$ is associated with a mapping $M: A \rightarrow \Delta(B)$. On input $a \in A$, the algorithm $\cal{M}$ outputs $\mathcal{M}(a) = b$ with probability $(M(a))_b$ for each $b \in B$. The probability space is over the coin flips of the algorithm $\cal{M}$.
+\end{definition}
+A database $x$ is a collection of records from a universe $\cal{X}$. The representation is usually a histogram: $x \in \mathbb{N}^{|\cal{X}|}$  where each entry $x_i$ represents the number of elements in the database $x$ of $type \ i \in \cal{X}$. For instance, let \( \mathcal{X} = \{ A, B, C, D \} \) and \( x = [0, 2, 2, 0] \in \mathbb{N}^{\vert 4 \vert }\). That means database \( x \) contains 2 records of \(B\) and 2 records of \(C\).
+\begin{definition}[Distance Bewteen Databases]
+    The distance between two databases \(x, y\) is by the \( \ell_1 \) norm defined as:
+    \[
+        \norm{x - y}_1 = \sum_{i=1}^{\abs{\cal{X}}} \abs{x_i - y_i}
+    \]
+\end{definition}
+\begin{definition}[Differential Privacy]
+    A randomized algorithm \(\cal{M}\) with domain \(\mathbb{N}^{\abs{\cal{X}}}\)  is (\(\varepsilon, \delta\))-differentially private if for all \(\cal{S} \subset \text{Range}(\cal{M})\) and for all \(x, y \in \mathbb{N}^{\abs{X}}\)  such that \(\norm{x - y}_1 \le 1 \):
+    \[
+        \Pr \left[\mathcal{M}(x) \in \mathcal{S}\right] \le \exp (\varepsilon) \Pr \left[\mathcal{M}(y) \in \mathcal{S}\right] + \delta
+    \]
+    where the probability space is over the mechanism \(\cal{M}\). If \(\delta = 0\), we say \(\mathcal{M}\) is \(\varepsilon\)-differentially private.
+\end{definition}
+Typically, we are interested in a \(\delta\) that's less than the inverse of any polynomial in the size of the database \(x\).
+\begin{definition}[Privacy Loss]
+    Given an output \(\xi \sim \mathcal{M}\), the privacy loss is defined as:
+    \[
+        \mathcal{L}_{\mathcal{M}(x) \Vert \mathcal{M}(y)}^{(\xi)} = \ln \left(
+            \frac{\Pr \left[\mathcal{M}(x) = \xi\right]}{\Pr \left[\mathcal{M}(y) = \xi\right]}
+        \right)
+    \]
+\end{definition}
+\section{Immunity to Post-processing}
+\begin{proposition}[Post-Processing]
+    Let \(\cal{M}: \mathbb{N}^{\abs{\mathcal{X}}} \rightarrow R \) be a randomized algorithm that is \dip{\(\ve\)}{\(\delta\)}. Let \(f: R \rightarrow R^\prime \) be an arbitrary randomized mapping. Then \( f \circ \mathcal{M}: \mathbb{N}^{\abs{\mathcal{X}}} \to R^\prime \) is \dip{\(\ve\)}{\(\delta\)}.
+    \begin{proof}
+        We prove the proposition for a deterministic function \(f: R \to R^\prime\). The result then follows because \textbf{any randomized mapping can be decomposed into a convex combination of deterministic functions}, \textbf{and a convex combination of differentially private mechanism is also differentially private}.
+
+        Fix any pair of neighboring databases \(x, y\) with \(\norm{x - y}_1 \le 1 \), and fix any event \(S \subset R^\prime\). Let \(T = \left\{r \in R : f(r) \in S \right\}\). We then have
+        \begin{align*}
+            \Pr \left[f(\mathcal{M}(x)) \in S   \right] &= \Pr \left[\mathcal{M}(x) \in T\right]
+            \\ &\le \exp(\ve) \Pr \left[\mathcal{M}(y) \in T\right] + \delta
+            \\ &= \exp(\ve) \Pr \left[f(\mathcal{M}(y)) \in S\right] + \delta
+        \end{align*}
+        which is what we wanted.
+    \end{proof}
+
+    \begin{remark}
+        Differential privacy is immune to post-processing.
+    \end{remark}
+\end{proposition}
+\section{Economic View of DP's Promise}
+A differentially private mechanism \(\mathcal{M}\) does not promise that an individual faces harm after the result is released. Instead, it promises that the probability of facing the harm is not significantly more than \textbf{not participating the database}. This provides an \textbf{incentive} for an individual to include their data in the database.
+
+Consider an individual \(i\) who has arbitrary preference over the set of all possible future events, which we denote by \(\mathcal{A}\). Let \(u_i: \mathcal{A} \to \mathbb{R}^+\) be the utility function, where \(i\) experiences utility \(u_i(a)\) when \(a \in \mathcal{A}\) happens. Suppose \(x\) is a dataset containing private individuals' data, and \(y\) is a dataset identical to \(x\) except that it does not contain individual \(i\)'s data. Suppose \(\mathcal{M}\) is an \edip algorithm. Let \(f: \text{Range}(\mathcal{M}) \to \Delta(\mathcal{A})\) be the arbitrary function that determines the distribution over future events \(\mathcal{A}\), conditioned on the output of \(\mathcal{M}\). By the definition of differential privacy and its immunity to post-processing, we have
+\begin{align*}
+    \mathbb{E}_{a \sim f(\mathcal{M}(x))} \left[u_i(a)\right] &= \sum_{a \in \mathcal{A}} u_i(a) \cdot \Pr_{f(\mathcal{M}(x))}[a]
+    \\ &\le \sum_{a \in \mathcal{A}} u_i(a) \cdot \exp (\ve) \cdot \Pr_{f(\mathcal{M}(y))}[a]
+    \\ &= \exp (\ve) \cdot \mathbb{E}_{a \sim f(\mathcal(M)(y))} [u_i(a)]
+\end{align*}
+This promise that the expected utility is not harmed by more than a factor of \(\exp(\ve)\) regardless of participating the database. Additionally, this promise holds \textbf{independently} of the individual's utility function \(u_i\), and holds \textbf{simultaneously} for multiple individuals who have completely different utility functions.

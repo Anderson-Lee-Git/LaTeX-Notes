@@ -1,0 +1,69 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{anyt/global//global/global/global}
+    \entry{cynthia2014algorithmic}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=c6d8866083f4c03af5e37e032df87089}{%
+           family={Dwork},
+           familyi={D\bibinitperiod},
+           given={Cynthia},
+           giveni={C\bibinitperiod}}}%
+        {{hash=9bb323b3c3d2af68def0dcbde8e6795d}{%
+           family={Roth},
+           familyi={R\bibinitperiod},
+           given={Aaron},
+           giveni={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{f676b30234623eef69e5ed6be9df75b0}
+      \strng{fullhash}{4d8bf63261aefa96e8725c0b5785f3b3}
+      \strng{fullhashraw}{4d8bf63261aefa96e8725c0b5785f3b3}
+      \strng{bibnamehash}{4d8bf63261aefa96e8725c0b5785f3b3}
+      \strng{authorbibnamehash}{4d8bf63261aefa96e8725c0b5785f3b3}
+      \strng{authornamehash}{f676b30234623eef69e5ed6be9df75b0}
+      \strng{authorfullhash}{4d8bf63261aefa96e8725c0b5785f3b3}
+      \strng{authorfullhashraw}{4d8bf63261aefa96e8725c0b5785f3b3}
+      \field{labelalpha}{DR14}
+      \field{sortinit}{D}
+      \field{sortinithash}{6f385f66841fb5e82009dc833c761848}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{issn}{1551-305X}
+      \field{journaltitle}{Foundations and Trends® in Theoretical Computer Science}
+      \field{number}{3–4}
+      \field{title}{The Algorithmic Foundations of Differential Privacy}
+      \field{volume}{9}
+      \field{year}{2014}
+      \field{pages}{211\bibrangedash 407}
+      \range{pages}{197}
+      \verb{doi}
+      \verb 10.1561/0400000042
+      \endverb
+      \verb{urlraw}
+      \verb http://dx.doi.org/10.1561/0400000042
+      \endverb
+      \verb{url}
+      \verb http://dx.doi.org/10.1561/0400000042
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
