@@ -1,0 +1,56 @@
+\chapter{Understanding Stable Diffusion v3.5}
+\section{Generalized Setting}
+\label{sec:setup}
+\subsection{Constructing Conditional Probability Path}
+Let $p_{1} = \mathcal{N} (0, 1)$. The goal is to construct a probability path $p_t(z_t)$ such that $p_1 = \mathcal{N}(0, 1)$ and $p_0 = p_{data}$. Instead of constructing $p_t$, we first construct the conditional probability path $p_t(z_t \vert \epsilon)$, where $z_t = a_t x_0 + b_t \epsilon$ and $\epsilon \sim \mathcal{N}(0, \mathcal{I})$. With such $z_t$, the marginal probability path $p_t(z_t) = \mathbb{E}_{\epsilon \sim \mathcal{N}(0, \mathcal{I})} \lbrack p_t(z_t \vert \epsilon) \rbrack$ satisfies the condition we want, $p_0 = p_{data}$ and $p_1 = \mathcal{N} (0, 1)$ when $a_0 = 1, b_0 = 0, a_1 = 0, b_1 = 1$ is satisfied.
+\subsection{Derive Conditional Vector Field $u_t (z \vert \epsilon)$}
+Recall that \textbf{flow} is a solution to the ODE, $z_t$ is the trajectory, and $u_t (z \vert \epsilon)$ is the conditional vector field. The ODE conditioned on $\epsilon$ is defined as
+\begin{equation}
+    \frac{d}{dt} z_t = u_t(z \vert \epsilon)
+\end{equation}
+where $z_t \sim p_t(\cdot \vert \epsilon)$. We use $\psi_t (\cdot \vert \epsilon)$ to describe the flow conditioned on $\epsilon$
+\begin{equation}
+    \psi_t(\cdot | \epsilon) : x_0 \mapsto a_t x_0 + b_t \epsilon
+\end{equation}
+\begin{equation}
+    u_t(z \vert \epsilon) := \frac{d}{dt} \psi_t (\psi_t^{-1} (z \vert \epsilon) \vert \epsilon)
+    \label{flow-defined-conditional-vector-field}
+\end{equation}
+Equation \eqref{flow-defined-conditional-vector-field} takes in $z$ conditioned on $\epsilon$, reverse to $x_0$ using $\psi_{t}^{-1}$, and then take the derivative with respect to $t$ after applying $\psi_t$. We can plug in the values we have to derive $u_t(z \vert \epsilon)$ as follows:
+\begin{align}
+    u_t(z \vert \epsilon) &= \frac{d}{dt} a_t (\psi^{-1}_{t}(z \vert \epsilon)) + \frac{d}{dt} b_t \epsilon
+    \\ &= \dot{a}_t (\psi^{-1}_{t}(z \vert \epsilon)) + \dot{b}_t \epsilon
+    \\ &= \dot{a}_t (\frac{z - b_t \epsilon}{a_t}) + \dot{b}_t \epsilon
+    \\ &= \frac{\dot{a}_t}{a_t} \cdot z - \epsilon (\frac{\dot{a}_t b_t}{a_t} - \dot{b}_t)
+    \\ &= \frac{\dot{a}_t}{a_t} \cdot z - \epsilon (\frac{\dot{a}_t b_t - a_t \dot{b}_t}{a_t})
+\end{align}
+where $\dot{a}_t = \frac{d}{d_t} a_t, \dot{b}_t = \frac{d}{dt} b_t$. Now, let $\lambda_t := \log \frac{a_t^2}{b_t^2}$ be the \textit{signal-to-noise ratio}, and therefore $\dot{\lambda}_t = 2 (\frac{\dot{a}_t}{a_t} - \frac{\dot{b}_t}{b_t})$. We can reparameterize
+\begin{equation}
+    u_t(z \vert \epsilon) = \frac{\dot{a}_t}{a_t} \cdot z - \frac{b_t}{2} \dot{\lambda}_t \epsilon
+\end{equation}
+\subsection{Conditional Flow Matching (CFM) Objective}
+\begin{align}
+    \mathcal{L}_{CFM} &= \mathbb{E}_{t, z \sim p_t(\cdot \vert \epsilon), \epsilon \sim \mathcal{N}(0, 1)} \left[ \| v_\theta(z, t) - u_t(z \vert \epsilon) \|_2^2 \right]
+    \\ &= \mathbb{E}_{t, z \sim p_t(\cdot \vert \epsilon), \epsilon \sim \mathcal{N}(0, 1)} \left[ \| v_\theta(z, t) - \frac{\dot{a}_t}{a_t} z + \frac{b_t}{2} \dot{\lambda}_t \epsilon \|_2^2 \right]
+    \\ &= \mathbb{E}_{t, z \sim p_t(\cdot \vert \epsilon), \epsilon \sim \mathcal{N}(0, 1)} \left( -\frac{b_t}{2} \dot{\lambda}_t\right)^2 \left[ \| (-\frac{2}{\dot{\lambda}_t b_t}) (v_\theta(z, t) - \frac{\dot{a}_t}{a_t} z) - \epsilon \|_2^2 \right]
+    \\ &= \mathbb{E}_{t, z \sim p_t(\cdot \vert \epsilon), \epsilon \sim \mathcal{N}(0, 1)} \left( -\frac{b_t}{2} \dot{\lambda}_t\right)^2 \left[ \| \epsilon_\theta (z, t) - \epsilon \|_2^2 \right]
+\end{align}
+where $\epsilon_\theta (z, t) = (-\frac{2}{\dot{\lambda}_t b_t}) (v_\theta(z, t) - \frac{\dot{a}_t}{a_t} z)$ is used to reparameterize, and therefore we obtain a noise prediction network $\epsilon_\theta (z, t)$ to optimize for.
+
+\section{Rectified Flow}
+In Section~\ref{sec:setup}, we build a generalized form of $\mathcal{L}_{CFM}$ with a general $a_t, b_t$ as long as $a_0 = 1, b_0 = 0, a_1 = 0, b_1 = 1$. While there are many ways to specify the schedule of $a_t, b_t$, rectified flow uses a simple schedule where $a_t = (1 - t), b_t = t$. i.e.
+\begin{equation}
+    z_t = (1 - t) x_0 + t\epsilon
+\end{equation}
+The parameterized loss function then become
+\begin{align}
+    \mathcal{L}_{CFM}^{RF} &= \mathbb{E}_{t, z \sim p_t(\cdot \vert \epsilon), \epsilon \sim \mathcal{N}(0, 1)} \left[ \| v_\theta(z, t) - u_t(z \vert \epsilon) \|_2^2 \right]
+    \\ &= \mathbb{E}_{t, z \sim p_t(\cdot \vert \epsilon), \epsilon \sim \mathcal{N}(0, 1)} \left[ \| v_\theta(z, t) - \left( \frac{-1}{1 - t} \cdot z - \epsilon \cdot \frac{-t - (1-t)}{1-t} \right) \|_2^2 \right]
+    \\ &= \mathbb{E}_{t, z \sim p_t(\cdot \vert \epsilon), \epsilon \sim \mathcal{N}(0, 1)} \left[ \| v_\theta(z, t) - \frac{\epsilon - z}{1 - t} \|_2^2 \right]
+\end{align}
+Instead of sampling from sampling $z \sim p_t(\cdot \vert \epsilon)$, in training time, we need to sample $x_0 \sim p_{data}$, and $z_t = (1 - t) x_0 + t \epsilon$.
+\begin{align}
+    \mathcal{L}_{CFM}^{RF} &= \mathbb{E}_{t, x_0 \sim p_{data}, \epsilon \sim \mathcal{N}(0, 1)} \left[ \| v_\theta((1 - t) x_0 + t \epsilon, t) - \frac{\epsilon - ((1 - t) x_0 + t \epsilon)}{1 - t} \|_2^2 \right]
+    \\ &= \mathbb{E}_{t, x_0 \sim p_{data}, \epsilon \sim \mathcal{N}(0, 1)} \left[ \| v_\theta((1 - t) x_0 + t \epsilon, t) - \frac{(1 - t) \cdot (\epsilon - x_0)}{1 - t} \|_2^2 \right]
+    \\ &= \mathbb{E}_{t, x_0 \sim p_{data}, \epsilon \sim \mathcal{N}(0, 1)} \left[ \| v_\theta((1 - t) x_0 + t \epsilon, t) - (\epsilon - x_0) \|_2^2 \right]
+\end{align}

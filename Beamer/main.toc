@@ -1,0 +1,5 @@
+\babel@toc {english}{}\relax 
+\beamer@sectionintoc {1}{Useful Environment}{3}{0}{1}
+\beamer@subsectionintoc {1}{1}{Standard Environment}{3}{0}{1}
+\beamer@subsectionintoc {1}{2}{Customized Environment}{5}{0}{1}
+\beamer@sectionintoc {2}{References}{7}{0}{2}
